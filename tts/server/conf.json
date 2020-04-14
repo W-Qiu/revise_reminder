@@ -1,0 +1,5 @@
+{
+    "model_name":"best_model.pth.tar",
+    "model_config":"config.json",
+    "use_cuda": false
+}
