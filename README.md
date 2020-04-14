@@ -17,7 +17,7 @@ Each vocab has two counts associated with it: remember_count and forget_count, t
 The project contains three Apps (what Django calls its modular components):
 * users
 * vocabularies
-* type_to_test (test log)
+* word logs
 
 ## Core Components and Libraries
 * spaCy
