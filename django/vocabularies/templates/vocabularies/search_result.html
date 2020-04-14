@@ -1,0 +1,31 @@
+{% extends "vocabularies/index.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+	{% if words %}
+		<table style="width:100%">
+			<tr>
+				<th>Word</th>
+				<th>Interpretation</th>
+				<th>Example</th>
+			</tr>
+		{% for word in words%}
+			<tr>
+				<td><a href="../single_word/?id={{ word.id }}">{{ word.word }}</a></td>
+				{% if word.interpretations %}
+					{% for interpretation in word.interpretations %}
+						<td>{{ interpretation }}</td>
+					{% endfor %}
+				{% else %}
+					<td> </td>
+				{% endif %}
+
+				{% for example in word.examples %}
+					<td>{{ example }}</td>
+				{% endfor %}	
+			</tr>
+		{% endfor %}
+		</table>
+	{% endif %}
+
+{% endblock content %}

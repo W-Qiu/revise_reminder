@@ -1,0 +1,34 @@
+{% extends "vocabularies/index.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+	<ul class="nav nav-tabs">
+	  <li class="mr-2"><a href="{% url 'profile' %}">Profile</a></li>
+	  <li class="mr-2"><a href="{% url 'password_change' %}">Security</a></li>
+	  <li class="active"><a href="{% url 'all_user_words' %}">Words</a></li>
+	</ul>
+
+	{% if words %}
+		<table style="width:100%">
+			<tr>
+				<th>Count</th>
+				<th>Word</th>
+				<th>Interpretations</th>
+				<th>Examples</th>
+			</tr>
+		{% for word in words%}
+				<tr>
+					<td>{{ forloop.counter }}</td>
+					<td><a href="../single_word/?id={{ word.id }}">{{ word.word }}</a></td>
+					{% for interpretation in word.interpretations%}
+						<td>{{ interpretation }}</td>
+					{% endfor %}	
+
+					{% for example in word.examples%}
+						<td>{{ example }}</td>
+					{% endfor %}	
+				</tr>
+		{% endfor %}
+		</table>
+	{% endif %}
+
+{% endblock content %}

@@ -1,0 +1,28 @@
+{% extends "vocabularies/index.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+	{% if words %}
+		<table style="width:100%">
+			<tr>
+				<th>Word</th>
+				<th>Pick</th>
+				<th>Example</th>
+			</tr>
+		{% for word, picks in words%}
+			<tr>
+				<td>{{ word.word }}</td>
+
+				{% for pick in picks%}
+					<td>{{ pick }}</td>
+				{% endfor %}
+
+				{% for example in word.examples %}
+					<td>{{ example }}</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
+		</table>
+	{% endif %}
+
+{% endblock content %}

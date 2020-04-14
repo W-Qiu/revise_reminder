@@ -1,0 +1,191 @@
+{% extends "vocabularies/index.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<!-- main display -->
+<div class="main_display container row">
+	<div class="col-6">
+		<!-- word and similar words -->
+		<div>
+			<h1 class="dbclick_edit" style="display:inline">{{ word.word }}</h1>
+			<!-- similar-looking words -->
+			{% for word in similar_words %}
+				<a title="{{ word.word }}" href="/single_word/?id={{ word.id }}" style="display:inline">{{ word.word }}</a>
+			{% endfor %}
+		</div>
+
+		<!-- audio player -->
+		<audio id="audio" controls autoplay src="/audio/{{ word.word }}.wav"></audio>
+
+		<!-- examples -->
+		{% for example in word.examples %}
+			<h3 id="example{{ forloop.counter0 }}" class="example dbclick_edit" style="visibility: hidden">{{ example }}</h3>
+		{% endfor %}
+
+		<!-- highlighted words -->
+		{% if picks %}
+			<div id="num_picks" style="display: none">{{ num_picks }}</div>
+			{% for pick in picks %}
+				<div id="pick{{ forloop.counter0 }}" style="display: none">{{ pick }}</div>
+			{% endfor %}
+		{% endif %}
+
+		<!-- interpretations -->
+		{% for interpretation in word.interpretations %}
+			<h3 class="interpretation dbclick_edit" style="visibility: hidden">{{ interpretation }}</h3>
+		{% endfor %}
+	</div>
+
+	<div class="col-6 container">
+		<div id="word_images_div" class="row">
+			<img src="" id="word_image" class="word_image column" style="display: none">
+		</div>
+		{% if logs %}
+			<div id='log' class="row" style="visibility: hidden">
+				<table class="table">
+					<tr>
+						<th scope="col">Log</th>
+						<th scope="col">Timestamp</th>
+					</tr>
+					{% for log in logs  %}
+						<tr>
+							<td>{{ log.log }}</td>
+							<td>{{ log.timestamp }}</td>
+						</tr>
+					{% endfor %}
+				</table>
+			</div>
+		{% endif %}
+	</div>
+</div>
+
+
+<div class="container">
+	<!-- buttons -->
+	<button id="show_example_btn" class="btn btn-secondary" onclick="show_example()">Show me the example</button>
+	<button id="TTT_modal_btn" type="button" class="btn btn-secondary" data-toggle="modal" data-target="#TTT_modal">Type to test</button>
+	<button id="show_interp_btn" class="btn btn-secondary" onclick="show_interpretation()" style="display: none">Still don't recognize it</button>
+
+	<!-- "yes" Form -->
+	<form action='/yes/' method="POST">
+	{% csrf_token %}
+		<input type="hidden" name="word_id" value="{{ word.id }}">
+		<button id="yes_btn" class="btn btn-secondary" type="submit">I know this word</button>
+	</form>
+
+	<!-- "no" form -->
+	<form action='/no/' method="POST">
+	{% csrf_token %}
+		<input type="hidden" name="word_id" value="{{ word.id }}">
+		<button class="btn btn-primary" id="next_word_btn" type="submit" style="display: none">Next word</button>
+	</form>
+	
+	<!-- Delete Word Form -->
+	<form action='/delete_word/' method="POST">
+	{% csrf_token %}
+		<input type="hidden" name="word_id" value="{{ word.id }}">
+		<button class="btn btn-danger" id="delete_btn" type="submit">Delete this word</button>
+	</form>
+</div>
+
+<!-- info about the word -->
+<div class="container">
+	{% if word.last_test_result == True %}
+		<div>You got it last time!</div>
+	{% elif word.last_test_result == NULL %}
+
+	{% else %}
+		<div>You did't get it last time</div>
+	{% endif %}
+
+	{% if word.remember_count != 0 %}
+		<div>Remember Count: {{ word.remember_count }}</div>
+	{% endif %}
+
+	{% if word.forget_count != 0 %}
+		<div>Forget Count: {{ word.forget_count }}</div>
+	{% endif %}
+	
+	<div>Added on: {{ word.date_created }}</div>
+
+	{% if word.date_last_test != None %}
+		<div>Last time tested on: {{ word.date_last_test }}</div>
+	{% endif %}
+</div>
+
+<!-- edit modal -->
+<button id="edit_modal_btn" type="button" class="btn btn-primary" data-toggle="modal" data-target="#edit_modal" style="display:none;"></button>
+<div id="edit_modal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ word.word }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+		<form id="edit_modal" action='/single_word/' method="POST">
+		{% csrf_token %}
+			<input type="hidden" name="word_id" value="{{ word.id }}">
+			<h6>Word</h6>
+			<input type="text" class="form-control" name="word" value="{{ word.word }}">
+
+			<h6>Examples<button type="button" class="more_example btn btn-link badge float-right">More</button></h6>
+			<div class="example_wrapper">
+			{% for example in word.examples %}
+				<input type="text" class="form-control" name="example" value="{{ example }}">
+			{% endfor %}
+			</div>
+
+			<h6>Interpretations<button type="button" class="more_interpretation btn btn-link badge float-right">More</button></h6>
+			<div class="interpretation_wrapper">
+			{% for interpretation in word.interpretations %}
+				<input type="text" class="form-control" name="interpretation" value="{{ interpretation }}">
+			{% endfor %}
+			</div>
+
+	      	<div class="modal-footer">
+	          <button type="submit" class="btn btn-primary">Save changes</button>
+	          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+	      	</div>
+		</form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- word_log modal -->
+<div id="TTT_modal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Log</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+		<form action='/word_logs/' method="POST">
+		{% csrf_token %}
+			<h1>{{ word.word }}</h1>
+			<h6>Enter your log</h6>
+			<input id="TTT_input" type="text" autocomplete="off" class="form-control" name="log">
+			<input type="hidden" name="word_id" value="{{ word.id }}">
+	      	<div class="modal-footer">
+	          <button type="submit" class="btn btn-primary">Log it</button>
+	          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+	      	</div>
+		</form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'vocabularies/js/mousetrap.min.js' %}" crossorigin="anonymous"></script>
+	<script src="{% static 'vocabularies/js/keycontrol.js' %}" crossorigin="anonymous"></script>
+	<script src="{% static 'vocabularies/js/dbclick_to_edit.js' %}" crossorigin="anonymous"></script>
+	<script src="{% static 'vocabularies/js/onload.js' %}" crossorigin="anonymous"></script>
+
+{% endblock content %}

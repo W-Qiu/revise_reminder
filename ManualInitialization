@@ -1,0 +1,18 @@
+Go in the django container 
+    docker-compose exec django /bin/bash
+
+Collect static files so the Nginx server can serve
+    python manage.py collectstatic --no-input
+
+Initialize similar words on Redis server
+    python manage.py initsimilarwords
+
+Initialize audio files so the Nginx server can serve
+    python manage.py initaudio
+
+if no crobjob, one needs to manually refresh users' progress
+    1. Go in the postgresql container
+    2. su postgres (or your own name if you changed it)
+    3. psql
+    4. connect to database
+    5. UPDATE user_table_name SET today_progress=0;

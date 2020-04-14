@@ -1,0 +1,100 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link type="text/css" rel="stylesheet" href="{% static 'vocabularies/css/bootstrap.min.css' %}" crossorigin="anonymous">
+  <!-- Custom CSS -->
+  <link type="text/css" rel="stylesheet" href="{% static 'vocabularies/css/custom.css' %}">
+  <!-- JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="{% static 'vocabularies/js/jquery-3.4.1.slim.min.js' %}" crossorigin="anonymous"></script>
+  <script src="{% static 'vocabularies/js/popper.min.js' %}" crossorigin="anonymous"></script>
+  <script src="{% static 'vocabularies/js/bootstrap.bundle.min.js' %}" crossorigin="anonymous"></script>
+  <script src="{% static 'vocabularies/js/more_input.js' %}" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <!-- Navbar Div -->
+  <nav class="navbar navbar-expand-xs navbar-dark row">
+    <div class="container">
+      <!-- Brand -->
+      <a class="navbar-brand text-dark" href="{% url 'home' %}">
+        <img id="logo" src="{% static 'vocabularies/logo.png' %}">
+        Revise Reminder
+      </a>
+
+      <!-- List -->
+      <ul class="nav row">
+        {% if user.is_authenticated %}
+          <!-- Search bar -->
+          <form action="{% url 'search' %}" method="get">
+            <input class="nav-item mt-1 mr-2" name="query" type="text" placeholder="Search...">
+            <input type="submit" style="position: absolute; left: -9999px">
+          </form>
+
+          <button id="new_word_modal_btn" type="button" class="btn btn-primary" data-toggle="modal" data-target="#new_word_modal">New Word</button>
+          <a class="nav-item nav-link" href="{% url 'profile' %}">{{ user.email }}</a>
+          <a class="nav-item nav-link" href="{% url 'logout' %}">Log out</a>
+        {% else %}
+          <a class="nav-item nav-link" href="{% url 'signup' %}">Sign up</a>
+          <a class="nav-item nav-link" href="{% url 'login' %}">Log in</a>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="container-fluid bg-light main">
+    <div class="d-flex justify-content-center">
+      {% if messages %}
+        {% for message in messages%}
+          <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div class="container bg-light text-dark">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- New word modal -->
+  <div id="new_word_modal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Word</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+      <form action='/new_word/' method="POST">
+      {% csrf_token %}
+        <h6>Example<button type="button" class="more_example btn btn-link badge float-right">More</button></h6>
+        <div class="example_wrapper">
+          <input type="text" class="form-control" autocomplete="off" name="examples">
+        </div>
+        <h6>Word</h6>
+        <input type="text" class="form-control" autocomplete="off" name="word">
+        <h6>Interpretation<button type="button" class="more_interpretation btn btn-link badge float-right">More</button></h6>
+        <div class="interpretation_wrapper">
+          <input type="text" class="form-control" autocomplete="off" name="interpretations">
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

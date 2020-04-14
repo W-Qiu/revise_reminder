@@ -1,0 +1,74 @@
+version: '3.7'
+
+services:
+  django:
+    image: revise-reminder-django:dev-1.2.0
+    command: bash -c "python manage.py collectstatic --no-input && 
+                      uwsgi --ini uwsgi.ini"
+                      # python manage.py initaudio &&
+    depends_on: 
+      - postgresql
+      - redis
+      - tts
+    env_file:
+      - ./django-env-public
+    volumes: 
+      - type: volume
+        source: socket
+        target: /tmp/sockets
+      - type: volume
+        source: django-static-data
+        target: /var/django/static/
+  nginx:
+    image: revise-reminder-nginx:dev-1.2.0
+    ports:
+      - 80:80
+    depends_on: 
+      - django
+    volumes: 
+      - type: volume
+        source: socket
+        target: /tmp/sockets
+      - type: volume
+        source: django-static-data
+        target: /var/django/static/
+      - type: volume
+        source: audio-data
+        target: /var/django/audio/
+  postgresql:
+    image: revise-reminder-postgresql:dev-1.2.0
+    expose:
+      - 5432
+    env_file:
+      - ./db-env-public
+    volumes:
+      - type: volume
+        source: postgres-data
+        target: /var/lib/postgresql/data/
+  redis:
+    image: redis
+    expose:
+      - 6379
+    volumes:
+      - type: volume
+        source: redis-data
+        target: /data
+  tts: # This should start few secs later than django if need to init audio
+    image: revise-reminder-tts:dev-1.2.0
+    expose:
+      - 5003
+    ports:
+      - 5003:5003
+    env_file:
+      - ./tts-env
+    volumes: 
+      - type: volume
+        source: audio-data
+        target: /srv/app/server/audio
+
+volumes: 
+  socket:
+  postgres-data:
+  django-static-data:
+  redis-data:
+  audio-data:
