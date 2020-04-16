@@ -186,12 +186,12 @@ class HomeView(LoginRequiredMixin, TemplateView):
         # get_word_SQL:     fetch one word
         #                   (not just the word itself, all columns)
         # SQL commands for 'forgeting curve' revise strategy
-        # order by: forgetting curve function R = exp(-t/S)
+        # order by: forgetting curve function R = exp(-t/1+S)
         #           R = Retrievability, t = Time, S = Stability
         #           t = log(EXTRACT(EPOCH FROM 
         #                   (current_timestamp-date_last_test)))
-        #           S = 0.3 * forget_count + 0.7 * remember_count
-        # SQL commands for retriving user's log for a word
+        #           S = 0.2 * forget_count + 0.8 * remember_count
+        #           small S -> high rank
         """
         get_word_SQL_S1 = 'SELECT * FROM vocabularies_vocab \
                         ORDER BY date_last_test DESC \
@@ -200,8 +200,8 @@ class HomeView(LoginRequiredMixin, TemplateView):
         get_word_SQL_S2 = 'SELECT * FROM vocabularies_vocab             \
                            ORDER BY exp(-log(EXTRACT(EPOCH FROM         \
                                     (current_timestamp-date_last_test)))\
-                                    / (1 + 0.3 * forget_count +         \
-                                        0.7 * remember_count))          \
+                                    / (1 + 0.2 * forget_count +         \
+                                        0.8 * remember_count))          \
                            LIMIT 1'
 
         # main logic
