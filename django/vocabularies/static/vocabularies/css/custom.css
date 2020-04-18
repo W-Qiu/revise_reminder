@@ -1,8 +1,30 @@
 img#logo {
   max-width: 20%;
-  height:auto;
+  height: auto;
 }
 
 img.word_image {
-	width: 30%;
+  width: 30%;
+}
+
+.autosuggest {
+  background: rgb(248, 248, 248);
+  display: flex;
+  flex-direction: column;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  border: 0;
+  box-shadow: 0 4px 6px 0 rgba(32, 33, 36, 0.28);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+ul.autosuggest {
+  position: absolute;
+}
+
+.mouseover {
+  background: rgb(236, 37, 37);
 }

@@ -4,4 +4,5 @@ __pycache__/
 db-env
 django-env
 docker-compose.yml
+docker-compose-dev.yml
 best_model.pth.tar

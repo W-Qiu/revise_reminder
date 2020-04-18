@@ -137,6 +137,8 @@ EMAIL_HOST_PASSWORD = os.environ.get('GMAIL_PASSWORD')
 
 # nlp initialization
 nlp = spacy.load(os.environ.get('SPACY_MODEL'))
+
+
 class NLP():
     def __init__(self):
         self.nlp = nlp

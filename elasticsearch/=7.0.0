@@ -1,0 +1,10 @@
+Collecting elasticsearch-dsl
+  Using cached elasticsearch_dsl-7.1.0-py2.py3-none-any.whl (53 kB)
+Collecting elasticsearch<8.0.0,>=7.0.0
+  Using cached elasticsearch-7.6.0-py2.py3-none-any.whl (88 kB)
+Collecting python-dateutil
+  Using cached python_dateutil-2.8.1-py2.py3-none-any.whl (227 kB)
+Requirement already satisfied: six in /Users/atlas/virtualenvs/revise_reminder/lib/python3.7/site-packages (from elasticsearch-dsl) (1.14.0)
+Requirement already satisfied: urllib3>=1.21.1 in /Users/atlas/virtualenvs/revise_reminder/lib/python3.7/site-packages (from elasticsearch<8.0.0,>=7.0.0->elasticsearch-dsl) (1.25.8)
+Installing collected packages: elasticsearch, python-dateutil, elasticsearch-dsl
+Successfully installed elasticsearch-7.6.0 elasticsearch-dsl-7.1.0 python-dateutil-2.8.1

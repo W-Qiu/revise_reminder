@@ -8,7 +8,7 @@ var xhr = new XMLHttpRequest();
 var timer_id;
 xhr.open('GET', URL);
 
-window.onload = function(){
+window.onload = function () {
 	// ajax request, STOPPED NOW, activate when cloud is setup
 	// xhr.send();
 
@@ -24,7 +24,7 @@ window.onload = function(){
 
 }
 
-xhr.onload = function() {
+xhr.onload = function () {
 	url = xhr.response;
 	document.getElementById("word_image").src = url;
 };

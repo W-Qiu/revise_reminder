@@ -11,6 +11,7 @@ from django.views.generic.list import ListView
 from django.shortcuts import redirect
 
 from concurrent.futures import ThreadPoolExecutor
+from elasticsearch import Elasticsearch
 from math import floor
 from nltk import edit_distance as ED
 from redis import Redis
@@ -24,28 +25,43 @@ from users.models import CustomUser
 from word_logs.models import WordLog
 from .bing_search import search_img
 
+
 """
-Helpers
+# Global Init and variables
 """
+nlp = NLP().nlp  # NLP model, initialized in settings.py
+es = Elasticsearch()
+index = 'vocab'
+
+
+"""
+# Helpers
+"""
+
+
 def dictfetchone(cursor):
     """convert SQL result to dict instead of a list."""
     columns = [col[0] for col in cursor.description]
     result = [dict(zip(columns, row)) for row in cursor.fetchall()]
     return result[0]
 
+
 def dictfetchall(cursor):
     columns = [col[0] for col in cursor.description]
     result = [dict(zip(columns, row)) for row in cursor.fetchall()]
     return result
+
 
 def clean_data(L):
     """clean list data, strip white space and reject empty string."""
     i = len(L) - 1
     while i >= 0:
         L[i] = L[i].strip()
-        if L[i] == '': del L[i]
+        if L[i] == '':
+            del L[i]
         i -= 1
     return L
+
 
 def highlight(word_object):
     """pick words/phrases to highlight"""
@@ -65,7 +81,7 @@ def highlight(word_object):
                 doc = nlp(example)
 
                 # example < phrase
-                if len(doc) < len(word_token):  
+                if len(doc) < len(word_token):
                     picks.append("")
                     continue
 
@@ -87,6 +103,7 @@ def highlight(word_object):
                 picks.append(pick)
     return picks
 
+
 def getSimilarWords(user_id, word):
     """Fetch similar words from Redis server."""
     similar_words = []
@@ -99,6 +116,7 @@ def getSimilarWords(user_id, word):
              "id": pair[1]}
         similar_words.append(d)
     return similar_words
+
 
 def addSimilarWords(user_id, word):
     r = Redis(host=os.environ.get("REDIS_SERVICE_SERVICE_HOST"))
@@ -120,9 +138,10 @@ def addSimilarWords(user_id, word):
         r.zadd(this_set_name, mapping)
     r.zadd(new_set_name, d)
 
+
 def delSimilarWords(user_id, word, word_id):
     r = Redis(host=os.environ.get("REDIS_SERVICE_SERVICE_HOST"))
-    
+
     # delete field of this word in other words
     key = f"user:{str(user_id)}:{word}"
     field = f"{word}:{str(word_id)}"
@@ -135,12 +154,13 @@ def delSimilarWords(user_id, word, word_id):
     # delete this word's own sorted set
     r.delete(key)
 
+
 def updateAudio(word):
     """Signal TTS server to update audio files."""
 
     # TCP connection to TTS server
     server_addr = (os.environ.get("TTS_SERVICE_SERVICE_HOST"),
-               int(os.environ.get("TTS_SERVICE_SERVICE_PORT")))
+                   int(os.environ.get("TTS_SERVICE_SERVICE_PORT")))
     sock = socket.create_connection(server_addr)
 
     sock.send(str.encode(word))
@@ -148,20 +168,31 @@ def updateAudio(word):
     print(f"Updated audio file {word}.wav - {response.decode()}")
     sock.close()
 
-"""
-Global Init
-"""
-# NLP model, initialized in settings.py
-nlp = NLP().nlp
+
+def updateElasticSearch(word_obj):
+    body = {
+        "word": word_obj.word,
+        "owner_id": word_obj.owner_id,
+        "date_created": word_obj.date_created
+    }
+    try:
+        response = es.index(index, body, id=word_obj.id, refresh=True)
+        print(response)
+    except:
+        pass
+
 
 """
-All the views
+# All the views
 """
+
+
 def direct(request):
     if request.user.is_authenticated:
         return redirect('home')
     else:
         return redirect('login')
+
 
 class HomeView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
@@ -178,7 +209,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
         today_progress = self.request.user.today_progress
 
         user_info = {'today_target': today_target,
-                     'today_progress': today_progress }
+                     'today_progress': today_progress}
         context['user_info'] = user_info
 
         """
@@ -223,9 +254,9 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
             context['word'] = word
             context['logs'] = logs
-            context['similar_words'] = getSimilarWords(user_id, 
-                                                        word['word'])
-            
+            context['similar_words'] = getSimilarWords(user_id,
+                                                       word['word'])
+
         elif word_count == 0:
             context['no_word'] = True
         else:
@@ -248,6 +279,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
 #         # img_urls = search_img(word)
 #         # return HttpResponse(img_urls)
 #         return HttpResponse('not now')
+
 
 class YesView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
@@ -276,6 +308,7 @@ class YesView(LoginRequiredMixin, TemplateView):
 
         return redirect('home')
 
+
 class NoView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
     template_name = "vocabularies/home.html"
@@ -303,6 +336,7 @@ class NoView(LoginRequiredMixin, TemplateView):
 
         return redirect('home')
 
+
 class NewWordView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
     template_name = "vocabularies/home.html"
@@ -318,21 +352,23 @@ class NewWordView(LoginRequiredMixin, TemplateView):
             examples = clean_data(examples)
 
             new_word = Vocab(word=word,
-                            interpretations=interpretations,
-                            examples=examples,
-                            owner_id=user_id)
+                             interpretations=interpretations,
+                             examples=examples,
+                             owner_id=user_id)
             try:
                 new_word.save()
             except IntegrityError:
                 messages.warning(request, f'Duplicated word')
                 return redirect('home')
             else:  # update similar_words on Redis and audio file
-                with ThreadPoolExecutor(max_workers=2) as executor:
+                with ThreadPoolExecutor(max_workers=3) as executor:
                     executor.submit(addSimilarWords(user_id, word))
                     executor.submit(updateAudio(word))
+                    executor.submit(updateElasticSearch(new_word))
         else:
             messages.warning(request, f'Word is empty')
         return redirect('home')
+
 
 class DeleteWordView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
@@ -346,9 +382,14 @@ class DeleteWordView(LoginRequiredMixin, TemplateView):
             raise PermissionDenied
 
         delSimilarWords(user_id, word.word, word.id)
+        try:
+            es.delete(index, word.id)
+        except:
+            pass
         word.delete()
 
         return redirect('home')
+
 
 class AllWordsView(LoginRequiredMixin, ListView):
     login_url = '/login/'
@@ -360,6 +401,7 @@ class AllWordsView(LoginRequiredMixin, ListView):
         user_id = self.request.user.id
         return Vocab.objects.filter(owner_id=user_id)
 
+
 class SearchWordView(LoginRequiredMixin, ListView):
     login_url = '/login/'
     model = Vocab
@@ -370,10 +412,11 @@ class SearchWordView(LoginRequiredMixin, ListView):
         user_id = self.request.user.id
         query = self.request.GET.get('query')
         # query = re.sub('[^a-zA-Z -"]', '', query.lower())
-        return Vocab.objects.filter(Q(word__icontains=query) | \
-                                    Q(examples__icontains=query) | \
-                                    Q(interpretations__icontains=query), \
-                                    owner_id=user_id).order_by('-date_created') 
+        return Vocab.objects.filter(Q(word__icontains=query) |
+                                    Q(examples__icontains=query) |
+                                    Q(interpretations__icontains=query),
+                                    owner_id=user_id).order_by('-date_created')
+
 
 class SingleWordView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
@@ -410,9 +453,9 @@ class SingleWordView(LoginRequiredMixin, TemplateView):
         new_word = self.request.POST.get('word')
         old_word = word.word
         interpretations = clean_data(
-                            self.request.POST.getlist('interpretation'))
+            self.request.POST.getlist('interpretation'))
         examples = clean_data(self.request.POST.getlist('example'))
-        
+
         # update
         word.word = new_word
         word.examples = examples
@@ -423,7 +466,8 @@ class SingleWordView(LoginRequiredMixin, TemplateView):
         if old_word != new_word:
             delSimilarWords(user_id, old_word, word_id)
             addSimilarWords(user_id, new_word)
-            with ThreadPoolExecutor(max_workers=1) as executor:
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 executor.submit(updateAudio(new_word))
+                executor.submit(updateElasticSearch(word))
 
         return redirect(request.META.get('HTTP_REFERER', 'home'))
