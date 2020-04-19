@@ -2,12 +2,13 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password):
         if not email:
             raise ValueError('Users must have an email address')
 
-        user = self.model(email = self.normalize_email(email))
+        user = self.model(email=self.normalize_email(email))
         user.set_password(password)
         user.save()
         return user
@@ -15,11 +16,12 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, password):
         if not email:
             raise ValueError('Users must have an email address')
-        user = self.model(email = self.normalize_email(email))
+        user = self.model(email=self.normalize_email(email))
         user.is_admin = True
         user.set_password(password)
         user.save()
         return user
+
 
 class CustomUser(AbstractBaseUser):
     email = models.EmailField(unique=True)
@@ -32,7 +34,7 @@ class CustomUser(AbstractBaseUser):
         ('by last test date', 'by last test date'),
     ]
     revise_strategy = models.TextField(choices=STRATEGY_CHOICES,
-                                        default='forgetting curve')
+                                       default='forgetting curve')
 
     objects = CustomUserManager()
 

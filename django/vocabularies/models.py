@@ -4,6 +4,7 @@ from django.utils.timezone import now
 
 from users.models import CustomUser
 
+
 class Vocab(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     word = models.CharField(max_length=100)
@@ -18,7 +19,8 @@ class Vocab(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['owner', 'word'], name='unique_word_per_user'),
+            models.UniqueConstraint(
+                fields=['owner', 'word'], name='unique_word_per_user'),
         ]
 
     def __str__(self):

@@ -1,8 +1,24 @@
+# cache
 .DS_Store
 __pycache__/
 .vscode/
+
+# environment
 db-env
 django-env
+
+# yml files
 docker-compose.yml
 docker-compose-dev.yml
+
+# TTS model
 best_model.pth.tar
+
+# test
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache
+coverage_html_report/
