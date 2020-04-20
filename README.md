@@ -60,6 +60,7 @@ docker-compose -f docker-compose-public.yml
 
 - [✓]Pronunciation (TTS)
 - [✓]auto-suggest (Elasticsearch)
+- Better parallelism handling on creation of Vocab object
 - Dichotomy of Django frontend and backend, use Vue.js instead
 - Mobile-friendly version
 - Authentication for Nginx serving media files
