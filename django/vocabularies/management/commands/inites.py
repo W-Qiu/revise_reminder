@@ -1,3 +1,5 @@
+import os
+
 from django.core.management.base import BaseCommand
 
 from elasticsearch import Elasticsearch
@@ -5,8 +7,7 @@ from elasticsearch import Elasticsearch
 from vocabularies.models import Vocab
 from users.models import CustomUser
 
-
-es = Elasticsearch()
+es = Elasticsearch([os.environ.get("ES_SERVICE_SERVICE_HOST")])
 index = 'vocab'
 index_mapping = {
     'mappings': {

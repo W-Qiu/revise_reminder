@@ -30,7 +30,7 @@ from .bing_search import search_img
 # Global Init and variables
 """
 nlp = NLP().nlp  # NLP model, initialized in settings.py
-es = Elasticsearch()
+es = Elasticsearch([os.environ.get("ES_SERVICE_SERVICE_HOST")])
 index = 'vocab'
 
 
